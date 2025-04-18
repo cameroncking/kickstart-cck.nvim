@@ -1,89 +1,3 @@
---[[
-
-=====================================================================
-==================== READ THIS BEFORE CONTINUING ====================
-=====================================================================
-========                                    .-----.          ========
-========         .----------------------.   | === |          ========
-========         |.-""""""""""""""""""-.|   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||   KICKSTART.NVIM   ||   |-----|          ========
-========         ||                    ||   | === |          ========
-========         ||                    ||   |-----|          ========
-========         ||:Tutor              ||   |:::::|          ========
-========         |'-..................-'|   |____o|          ========
-========         `"")----------------(""`   ___________      ========
-========        /::::::::::|  |::::::::::\  \ no mouse \     ========
-========       /:::========|  |==hjkl==:::\  \ required \    ========
-========      '""""""""""""'  '""""""""""""'  '""""""""""'   ========
-========                                                     ========
-=====================================================================
-=====================================================================
-
-What is Kickstart?
-
-  Kickstart.nvim is *not* a distribution.
-
-  Kickstart.nvim is a starting point for your own configuration.
-    The goal is that you can read every line of code, top-to-bottom, understand
-    what your configuration is doing, and modify it to suit your needs.
-
-    Once you've done that, you can start exploring, configuring and tinkering to
-    make Neovim your own! That might mean leaving Kickstart just the way it is for a while
-    or immediately breaking it into modular pieces. It's up to you!
-
-    If you don't know anything about Lua, I recommend taking some time to read through
-    a guide. One possible example which will only take 10-15 minutes:
-      - https://learnxinyminutes.com/docs/lua/
-
-    After understanding a bit more about Lua, you can use `:help lua-guide` as a
-    reference for how Neovim integrates Lua.
-    - :help lua-guide
-    - (or HTML version): https://neovim.io/doc/user/lua-guide.html
-
-Kickstart Guide:
-
-  TODO: The very first thing you should do is to run the command `:Tutor` in Neovim.
-
-    If you don't know what this means, type the following:
-      - <escape key>
-      - :
-      - Tutor
-      - <enter key>
-
-    (If you already know the Neovim basics, you can skip this step.)
-
-  Once you've completed that, you can continue working through **AND READING** the rest
-  of the kickstart init.lua.
-
-  Next, run AND READ `:help`.
-    This will open up a help window with some basic information
-    about reading, navigating and searching the builtin help documentation.
-
-    This should be the first place you go to look when you're stuck or confused
-    with something. It's one of my favorite Neovim features.
-
-    MOST IMPORTANTLY, we provide a keymap "<space>sh" to [s]earch the [h]elp documentation,
-    which is very useful when you're not exactly sure of what you're looking for.
-
-  I have left several `:help X` comments throughout the init.lua
-    These are hints about where to find more information about the relevant settings,
-    plugins or Neovim features used in Kickstart.
-
-   NOTE: Look for lines like this
-
-    Throughout the file. These are for you, the reader, to help you understand what is happening.
-    Feel free to delete them once you know what you're doing, but they should serve as a guide
-    for when you are first encountering a few different constructs in your Neovim config.
-
-If you experience any errors while trying to install kickstart, run `:checkhealth` for more info.
-
-I hope you enjoy your Neovim journey,
-- TJ
-
-P.S. You can delete this when you're done too. It's your config now! :)
---]]
-
 -- Set <space> as the leader key
 -- See `:help mapleader`
 --  NOTE: Must happen before plugins are loaded (otherwise wrong leader will be used)
@@ -91,7 +5,8 @@ vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
 -- Set to true if you have a Nerd Font installed and selected in the terminal
-vim.g.have_nerd_font = false
+local have_nerd_font = os.getenv 'HAVE_NERD_FONT' == '1'
+vim.g.have_nerd_font = have_nerd_font
 
 -- [[ Setting options ]]
 -- See `:help vim.opt`
@@ -102,7 +17,7 @@ vim.g.have_nerd_font = false
 vim.opt.number = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
--- vim.opt.relativenumber = true
+vim.opt.relativenumber = true
 
 -- Enable mouse mode, can be useful for resizing splits for example!
 vim.opt.mouse = 'a'
@@ -240,29 +155,120 @@ vim.opt.rtp:prepend(lazypath)
 require('lazy').setup({
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
   'tpope/vim-sleuth', -- Detect tabstop and shiftwidth automatically
+  'opdavies/toggle-checkbox.nvim',
+  'DAmesberger/sc-im.nvim',
+  --'mipmip/vim-scimark',
 
-  -- NOTE: Plugins can also be added by using a table,
-  -- with the first argument being the link and the following
-  -- keys can be used to configure plugin behavior/loading/etc.
-  --
-  -- Use `opts = {}` to automatically pass options to a plugin's `setup()` function, forcing the plugin to be loaded.
-  --
+  {
+    'aspeddro/pandoc.nvim',
+    config = function()
+      require('pandoc').setup {
+        default = {
+          output = '%s_output.html',
+        },
+      }
+    end,
+  },
 
-  -- Alternatively, use `config = function() ... end` for full control over the configuration.
-  -- If you prefer to call `setup` explicitly, use:
-  --    {
-  --        'lewis6991/gitsigns.nvim',
-  --        config = function()
-  --            require('gitsigns').setup({
-  --                -- Your gitsigns configuration here
-  --            })
-  --        end,
-  --    }
-  --
-  -- Here is a more advanced example where we pass configuration
-  -- options to `gitsigns.nvim`.
-  --
-  -- See `:help gitsigns` to understand what the configuration keys do
+  'airblade/vim-rooter',
+
+  {
+    'toppair/peek.nvim',
+    event = { 'VeryLazy' },
+    build = 'deno task --quiet build:fast',
+    config = function()
+      require('peek').setup {
+        filetype = { 'markdown', 'vimwiki', 'wiki', 'markdown.pandoc', 'markdown.gfm', 'telekasten' },
+      }
+      vim.api.nvim_create_user_command('PeekOpen', require('peek').open, {})
+      vim.api.nvim_create_user_command('PeekClose', require('peek').close, {})
+    end,
+  },
+
+  {
+    'renerocksai/telekasten.nvim',
+    dependencies = { 'nvim-telescope/telescope.nvim', 'renerocksai/calendar-vim' },
+  },
+
+  {
+    'Kicamon/markdown-table-mode.nvim',
+    config = function()
+      require('markdown-table-mode').setup()
+    end,
+  },
+
+  {
+    'olimorris/codecompanion.nvim',
+    opts = {},
+    dependencies = {
+      'nvim-lua/plenary.nvim',
+      'nvim-treesitter/nvim-treesitter',
+    },
+    config = function()
+      local codecompletion_model = os.getenv 'CODECOMPLETION_MODEL'
+      if codecompletion_model == nil then
+        codecompletion_model = 'mistral-nemo:latest'
+      end
+      local codecompletion_context = tonumber(os.getenv 'CODECOMPLETION_CONTEXT')
+      if codecompletion_context == nil then
+        codecompletion_context = 2048
+      end
+      require('codecompanion').setup {
+        strategies = {
+          chat = {
+            adapter = 'localllm',
+          },
+          inline = {
+            adapter = 'localllm',
+          },
+          cmd = {
+            adapter = 'localllm',
+          },
+        },
+        adapters = {
+          localllm = function()
+            return require('codecompanion.adapters').extend('ollama', {
+              name = 'localllm', -- Give this adapter a different name to differentiate it from the default ollama adapter
+              schema = {
+                model = {
+                  default = codecompletion_model,
+                },
+                num_ctx = {
+                  default = codecompletion_context,
+                },
+                num_predict = {
+                  default = -1,
+                },
+              },
+            })
+          end,
+        },
+        prompt_library = {
+          ['assistant'] = {
+            strategy = 'chat',
+            description = 'assistant',
+            opts = {
+              index = 11,
+              is_slash_cmd = false,
+              auto_submit = true,
+              short_name = 'assistant',
+            },
+            prompts = {
+              {
+                role = 'user',
+                content = [[I don't require code assistance at this time.  Please alter your strategy to be a helpful AI assistant capable of responding appropriately for any request.]],
+              },
+            },
+          },
+        },
+      }
+      vim.cmd [[cab cc CodeCompanion]]
+      vim.keymap.set('n', '<leader>cn', function()
+        require('codecompanion').prompt 'assistant'
+      end, { noremap = true, silent = true })
+    end,
+  },
+
   { -- Adds git related signs to the gutter, as well as utilities for managing changes
     'lewis6991/gitsigns.nvim',
     opts = {
@@ -336,25 +342,61 @@ require('lazy').setup({
 
       -- Document existing key chains
       spec = {
+        {
+          '<leader>?',
+          function()
+            require('which-key').show { global = false }
+          end,
+          desc = 'Buffer Local Keymaps (which-key)',
+        },
+        { '<leader>c', group = '[C]ode/Chat', mode = { 'n', 'x' } },
+        { '<leader>cc', '<cmd>CodeCompanionChat Toggle<cr>', desc = '[C]hat Toggle', mode = { 'n', 'v' } },
+        { '<leader>cx', '<cmd>CodeCompanionChat Add<cr>', desc = 'Chat + Conte[x]t', mode = { 'n', 'v' } },
+        { '<leader>cS', '<cmd>CodeCompanionActions<cr>', desc = 'Chat [S]uggestion', mode = { 'n', 'v' } },
+        { '<leader>d', group = '[D]ocument' },
+        { '<leader>r', group = '[R]ename' },
         { '<leader>s', group = '[S]earch' },
         { '<leader>t', group = '[T]oggle' },
         { '<leader>h', group = 'Git [H]unk', mode = { 'n', 'v' } },
+        { '<leader>~', group = 'Workspaces' },
+        { '<leader>~~', '<cmd>cd ~/<CR>', desc = 'Home' },
+        { '<leader>~z', '<cmd>cd ~/z<CR>', desc = '[Z]ettelkasten' },
+        { '<leader>z', group = '[Z]ettelkasten' },
+        { '<leader>z:', '<cmd>Telekasten panel<CR>', desc = '[Z]ettelkasten' },
+        { '<leader>zf', '<cmd>Telekasten find_notes<CR>', desc = '[F]ind Notes' },
+        { '<leader>zs', '<cmd>Telekasten search_notes<CR>', desc = '[S]earch Notes' },
+        { '<leader>zd', '<cmd>Telekasten goto_today<CR>', desc = '[D]aily Note' },
+        { '<leader>zw', '<cmd>Telekasten goto_thisweek<CR>', desc = '[W]eekly Note' },
+        { '<leader>zg', '<cmd>Telekasten follow_link<CR>', desc = '[G]o To Link' },
+        { '<leader>zn', '<cmd>Telekasten new_note<CR>', desc = '[N]ew Note' },
+        { '<leader>zc', '<cmd>Telekasten show_calendar<CR>', desc = '[C]alendar' },
+        { '<leader>zb', '<cmd>Telekasten show_backlinks<CR>', desc = '[B]acklinks' },
+        { '<leader>zl', '<cmd>Telekasten insert_link<CR>', desc = 'Insert [L]ink' },
+        { '<leader>zi', '<cmd>Telekasten insert_img_link<CR>', desc = 'Insert [I]mage' },
+        { '<leader>zv', '<cmd>Telekasten switch_vault<CR>', desc = 'Switch [V]ault' },
+        { '<leader>tt', ':lua require("toggle-checkbox").toggle()<CR>', desc = '[T]oggle Checkbox' },
+        { '<leader>M', group = '[M]arkdown' },
+        { '<leader>Mt', '<cmd>Mtm<CR>', desc = '[T]able Mode' },
+        { '<leader>Mp', '<cmd>PeekOpen<CR>', desc = '[P]eek Open' },
+        { '<leader>MP', '<cmd>PeekClose<CR>', desc = '[P]eek Close' },
+        { '<leader>Ms', group = '[M]arkdown [S]heet' },
+        { '<leader>Mss', ':lua require("sc-im").open_in_scim()<CR>', desc = 'Open [S]heet' },
+        { '<leader>Msl', ':lua require("sc-im").toggle()<CR>', desc = 'Toggle [L]ink Format' },
+        { '<leader>Msu', ':lua require("sc-im").update(true)<CR>', desc = '[U]pdate (Sync)' },
+        { '<leader>Msr', ':lua require("sc-im").update(false)<CR>', desc = '[R]efresh (No Sync)' },
+        { '<leader>Msn', ':lua require("sc-im").rename()<CR>', desc = 'Re[n]ame' },
+        { '<leader>Me', '<cmd>Pandoc<CR>', desc = '[E]xport HTML' },
       },
     },
   },
-
-  -- NOTE: Plugins can specify dependencies.
-  --
-  -- The dependencies are proper plugin specifications as well - anything
-  -- you do for a plugin at the top level, you can do for a dependency.
-  --
-  -- Use the `dependencies` key to specify the dependencies of a particular plugin
 
   { -- Fuzzy Finder (files, lsp, etc)
     'nvim-telescope/telescope.nvim',
     event = 'VimEnter',
     dependencies = {
       'nvim-lua/plenary.nvim',
+      'nvim-lua/popup.nvim',
+      'nvim-telescope/telescope-media-files.nvim',
       { -- If encountering errors, see telescope-fzf-native README for installation instructions
         'nvim-telescope/telescope-fzf-native.nvim',
 
@@ -409,12 +451,17 @@ require('lazy').setup({
           ['ui-select'] = {
             require('telescope.themes').get_dropdown(),
           },
+          ['media_files'] = {
+            filetypes = { 'png', 'webp', 'jpg', 'jpeg', 'webm', 'pdf', 'mp4' },
+            find_cmd = 'rg',
+          },
         },
       }
 
       -- Enable Telescope extensions if they are installed
       pcall(require('telescope').load_extension, 'fzf')
       pcall(require('telescope').load_extension, 'ui-select')
+      pcall(require('telescope').load_extension, 'media_files')
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
@@ -562,7 +609,27 @@ require('lazy').setup({
           -- Jump to the type of the word under your cursor.
           --  Useful when you're not sure what type a variable is and you want to see
           --  the definition of its *type*, not where it was *defined*.
-          map('grt', require('telescope.builtin').lsp_type_definitions, '[G]oto [T]ype Definition')
+          map('<leader>D', require('telescope.builtin').lsp_type_definitions, 'Type [D]efinition')
+
+          -- Fuzzy find all the symbols in your current document.
+          --  Symbols are things like variables, functions, types, etc.
+          map('<leader>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
+
+          -- Fuzzy find all the symbols in your current workspace.
+          --  Similar to document symbols, except searches over your entire project.
+          map('<leader>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
+
+          -- Rename the variable under your cursor.
+          --  Most Language Servers support renaming across files, etc.
+          map('<leader>rn', vim.lsp.buf.rename, '[R]e[n]ame')
+
+          -- Execute a code action, usually your cursor needs to be on top of an error
+          -- or a suggestion from your LSP for this to activate.
+          map('<leader>cs', vim.lsp.buf.code_action, '[C]ode [S]uggestion', { 'n', 'x' })
+
+          -- WARN: This is not Goto Definition, this is Goto Declaration.
+          --  For example, in C this would take you to the header.
+          map('gD', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
 
           -- This function resolves a difference between neovim nightly (version 0.11) and stable (version 0.10)
           ---@param client vim.lsp.Client
@@ -663,17 +730,20 @@ require('lazy').setup({
       --  - settings (table): Override the default settings passed when initializing the server.
       --        For example, to see the options for `lua_ls`, you could go to: https://luals.github.io/wiki/settings/
       local servers = {
-        -- clangd = {},
-        -- gopls = {},
-        -- pyright = {},
-        -- rust_analyzer = {},
+        clangd = {},
+        gopls = {},
+        pyright = {},
+        rust_analyzer = {},
+        black = {},
+        prettier = {},
+        pyre = {},
         -- ... etc. See `:help lspconfig-all` for a list of all the pre-configured LSPs
         --
         -- Some languages (like typescript) have entire language plugins that can be useful:
         --    https://github.com/pmizio/typescript-tools.nvim
         --
         -- But for many setups, the LSP (`ts_ls`) will work just fine
-        -- ts_ls = {},
+        ts_ls = {},
         --
 
         lua_ls = {
@@ -761,10 +831,9 @@ require('lazy').setup({
       formatters_by_ft = {
         lua = { 'stylua' },
         -- Conform can also run multiple formatters sequentially
-        -- python = { "isort", "black" },
-        --
+        python = { 'isort', 'black' },
         -- You can use 'stop_after_first' to run the first available formatter from the list
-        -- javascript = { "prettierd", "prettier", stop_after_first = true },
+        javascript = { 'prettierd', 'prettier', stop_after_first = true },
       },
     },
   },
@@ -873,20 +942,25 @@ require('lazy').setup({
     -- change the command in the config to whatever the name of that colorscheme is.
     --
     -- If you want to see what colorschemes are already installed, you can use `:Telescope colorscheme`.
-    'folke/tokyonight.nvim',
+    -- 'folke/tokyonight.nvim',
+    -- priority = 1000, -- Make sure to load this before all the other start plugins.
+    -- config = function()
+    --   ---@diagnostic disable-next-line: missing-fields
+    --   require('tokyonight').setup {
+    --     styles = {
+    --       comments = { italic = false }, -- Disable italics in comments
+    --     },
+    --   }
+
+    --   -- Load the colorscheme here.
+    --   -- Like many other themes, this one has different styles, and you could load
+    --   -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
+    --   vim.cmd.colorscheme 'tokyonight-night'
+    -- end,
+    'joshdick/onedark.vim',
     priority = 1000, -- Make sure to load this before all the other start plugins.
     config = function()
-      ---@diagnostic disable-next-line: missing-fields
-      require('tokyonight').setup {
-        styles = {
-          comments = { italic = false }, -- Disable italics in comments
-        },
-      }
-
-      -- Load the colorscheme here.
-      -- Like many other themes, this one has different styles, and you could load
-      -- any other, such as 'tokyonight-storm', 'tokyonight-moon', or 'tokyonight-day'.
-      vim.cmd.colorscheme 'tokyonight-night'
+      vim.cmd.colorscheme 'onedark'
     end,
   },
 
@@ -965,18 +1039,18 @@ require('lazy').setup({
   --  Here are some example plugins that I've included in the Kickstart repository.
   --  Uncomment any of the lines below to enable them (you will need to restart nvim).
   --
-  -- require 'kickstart.plugins.debug',
-  -- require 'kickstart.plugins.indent_line',
-  -- require 'kickstart.plugins.lint',
-  -- require 'kickstart.plugins.autopairs',
-  -- require 'kickstart.plugins.neo-tree',
-  -- require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
+  require 'kickstart.plugins.debug',
+  require 'kickstart.plugins.indent_line',
+  require 'kickstart.plugins.lint',
+  require 'kickstart.plugins.autopairs',
+  require 'kickstart.plugins.neo-tree',
+  require 'kickstart.plugins.gitsigns', -- adds gitsigns recommend keymaps
 
   -- NOTE: The import below can automatically add your own plugins, configuration, etc from `lua/custom/plugins/*.lua`
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!
@@ -1003,6 +1077,100 @@ require('lazy').setup({
     },
   },
 })
+
+vim.cmd 'cd ~'
+
+vim.g.rooter_patterns = {
+  '.git',
+  'Makefile',
+  '*.sln',
+  'build/env.sh',
+  '.gitignore',
+}
+
+require('telekasten').setup {
+  home = vim.fn.expand '~/z/king/', -- Put the name of your notes directory here
+  dailies = vim.fn.expand '~/z/king/daily/',
+  weeklies = vim.fn.expand '~/z/king/daily/',
+  templates = vim.fn.expand '~/z/templates/',
+  template_new_note = vim.fn.expand '~/z/templates/note.md',
+  template_new_daily = vim.fn.expand '~/z/templates/daily.md',
+  template_new_weekly = vim.fn.expand '~/z/templates/weekly.md',
+  image_subdir = nil, -- store alongside files
+  extension = '.md',
+  new_note_filename = 'title',
+  -- uuid_type = '%Y%m%d%H%M',
+  -- uuid_sep = '-',
+  image_link_style = 'markdown',
+  sort = 'filename',
+  vaults = {
+    ['arc'] = {
+      home = vim.fn.expand '~/z/arc/',
+      dailies = vim.fn.expand '~/z/king/daily/',
+      weeklies = vim.fn.expand '~/z/king/daily/',
+      templates = vim.fn.expand '~/z/templates/',
+      template_new_note = vim.fn.expand '~/z/templates/note.md',
+      template_new_daily = vim.fn.expand '~/z/templates/daily.md',
+      template_new_weekly = vim.fn.expand '~/z/templates/weekly.md',
+      image_subdir = nil, -- store alongside files
+      extension = '.md',
+      new_note_filename = 'title',
+      -- uuid_type = '%Y%m%d%H%M',
+      -- uuid_sep = '-',
+      image_link_style = 'markdown',
+      sort = 'filename',
+    },
+    ['vol'] = {
+      home = vim.fn.expand '~/z/vol/',
+      dailies = vim.fn.expand '~/z/king/daily/',
+      weeklies = vim.fn.expand '~/z/king/daily/',
+      templates = vim.fn.expand '~/z/templates/',
+      template_new_note = vim.fn.expand '~/z/templates/note.md',
+      template_new_daily = vim.fn.expand '~/z/templates/daily.md',
+      template_new_weekly = vim.fn.expand '~/z/templates/weekly.md',
+      image_subdir = nil, -- store alongside files
+      extension = '.md',
+      new_note_filename = 'title',
+      -- uuid_type = '%Y%m%d%H%M',
+      -- uuid_sep = '-',
+      image_link_style = 'markdown',
+      sort = 'filename',
+    },
+    ['8v'] = {
+      home = vim.fn.expand '~/z/8v/',
+      dailies = vim.fn.expand '~/z/king/daily/',
+      weeklies = vim.fn.expand '~/z/king/daily/',
+      templates = vim.fn.expand '~/z/templates/',
+      template_new_note = vim.fn.expand '~/z/templates/note.md',
+      template_new_daily = vim.fn.expand '~/z/templates/daily.md',
+      template_new_weekly = vim.fn.expand '~/z/templates/weekly.md',
+      image_subdir = nil, -- store alongside files
+      extension = '.md',
+      new_note_filename = 'title',
+      -- uuid_type = '%Y%m%d%H%M',
+      -- uuid_sep = '-',
+      image_link_style = 'markdown',
+      sort = 'filename',
+    },
+    ['king'] = {
+      home = vim.fn.expand '~/z/king/',
+      dailies = vim.fn.expand '~/z/king/daily/',
+      weeklies = vim.fn.expand '~/z/king/daily/',
+      templates = vim.fn.expand '~/z/templates/',
+      template_new_note = vim.fn.expand '~/z/templates/note.md',
+      template_new_daily = vim.fn.expand '~/z/templates/daily.md',
+      template_new_weekly = vim.fn.expand '~/z/templates/weekly.md',
+      image_subdir = nil, -- store alongside files
+      extension = '.md',
+      new_note_filename = 'title',
+      -- uuid_type = '%Y%m%d%H%M',
+      -- uuid_sep = '-',
+      image_link_style = 'markdown',
+      sort = 'filename',
+    },
+  },
+  -- clipboard_program = "", -- xsel, xclip, wl-paste, osascript
+}
 
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
